@@ -12,15 +12,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter API Demo',
+      title: 'API ListView App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'API Data with ListView.builder'),
+      home: const ApiListScreen(),
     );
   }
 }
 
+// 1. Data Model Class for API JSON data
 class Post {
   final int id;
   final String title;
@@ -37,16 +38,15 @@ class Post {
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+// 2. Main Screen with API Fetching and ListView.builder
+class ApiListScreen extends StatefulWidget {
+  const ApiListScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ApiListScreen> createState() => _ApiListScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _ApiListScreenState extends State<ApiListScreen> {
   late Future<List<Post>> futurePosts;
 
   @override
@@ -64,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
       List<dynamic> jsonList = jsonDecode(response.body);
       return jsonList.map((jsonItem) => Post.fromJson(jsonItem)).toList();
     } else {
-      throw Exception('Failed to load posts from API');
+      throw Exception('Failed to load posts');
     }
   }
 
@@ -73,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: const Text('API Data with ListView.builder'),
       ),
       body: FutureBuilder<List<Post>>(
         future: futurePosts,
@@ -83,34 +83,53 @@ class _MyHomePageState extends State<MyHomePage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No data available.'));
+            return const Center(child: Text('No data found.'));
           } else {
             final posts = snapshot.data!;
             return ListView.builder(
               itemCount: posts.length,
               itemBuilder: (context, index) {
-                final post = posts[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      child: Text(post.id.toString()),
-                    ),
-                    title: Text(
-                      post.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      post.body,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                );
+                // Pass individual post data to our custom widget template (similar to Net Ninja's template style)
+                return PostCard(post: posts[index]);
               },
             );
           }
         },
+      ),
+    );
+  }
+}
+
+// 3. Custom Widget Template (Matching the tutorial's component separation style)
+class PostCard extends StatelessWidget {
+  final Post post;
+
+  const PostCard({super.key, required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "ID: ${post.id} - ${post.title}",
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              post.body,
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ],
+        ),
       ),
     );
   }
